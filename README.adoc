@@ -1,1 +1,57 @@
-Spring Stuff
+= Steps to Reproduce App Stuck "Deploying"
+
+== Build Sample App
+
+App was initialized following instructions at:
+
+http://docs.spring.io/spring-cloud-dataflow/docs/1.7.x/reference/htmlsingle/#_custom_processor_application
+
+----
+$ ./mvnw clean package
+<snip>
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time: 5.876 s
+[INFO] Finished at: 2018-12-18T16:22:12-05:00
+[INFO] ------------------------------------------------------------------------
+----
+
+== Start SCDF
+
+These steps largely from:
+
+http://docs.spring.io/spring-cloud-dataflow/docs/1.7.x/reference/htmlsingle/#getting-started-deploying-spring-cloud-dataflow
+
+.RabbitMQ
+----
+$ rabbitmq-server
+----
+
+.Skipper Server
+----
+$ wget https://repo.spring.io/release/org/springframework/cloud/spring-cloud-skipper-server/1.1.2.RELEASE/spring-cloud-skipper-server-1.1.2.RELEASE.jar
+$ java -jar spring-cloud-skipper-server-1.1.2.RELEASE.jar
+----
+
+.Dataflow Server
+----
+$ wget https://repo.spring.io/release/org/springframework/cloud/spring-cloud-dataflow-server-local/1.7.3.RELEASE/spring-cloud-dataflow-server-local-1.7.3.RELEASE.jar
+$ java -jar spring-cloud-dataflow-server-local-1.7.3.RELEASE.jar --spring.cloud.dataflow.features.skipper-enabled=true
+----
+
+.Dataflow Shell
+----
+$ wget https://repo.spring.io/release/org/springframework/cloud/spring-cloud-dataflow-shell/1.7.3.RELEASE/spring-cloud-dataflow-shell-1.7.3.RELEASE.jar
+$ java -jar spring-cloud-dataflow-shell-1.7.3.RELEASE.jar --dataflow.mode=skipper
+----
+
+== Create and Deploy Stream
+
+.In Dataflow Shell
+----
+dataflow:>app import http://bit.ly/Celsius-SR3-stream-applications-rabbit-maven
+dataflow:>app register --name transformer --type processor --uri file:///PATH/TO/THIS/REPO/target/transformer-0.0.1-SNAPSHOT.jar
+dataflow:>stream create --name transform --definition "http | transformer | log"
+dataflow:>stream deploy --name transform
+----
